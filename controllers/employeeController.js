@@ -3,54 +3,55 @@ import AppError from "../utils/AppError.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 
 export const fetchEmployees = asyncHandler(async function (req, res, next) {
-  let employees;
+  // Two different ways to make query in Mongoose
+  // employees = await employeeModel.find({ status: req.query.status });
+  // employees = await employeeModel.find().where("status").equals("active");
+  // const queryObject = { ...req.query };
 
-  console.log(req.query);
+  //? BUILDING THE QUERY
+  const queryObject = { ...req.query }; //cloning req.query object
 
-  if (Object.keys(req.query).length > 0) {
-    if (req.query.status) {
-      employees = await employeeModel.find({ status: req.query.status });
+  //* FILTERING
+  const excludeFields = ["sort", "page", "limit", "fields"]; //Creating a own array of fields which needs to remove.
 
-      console.log("employeeStatus:", employees);
+  excludeFields.forEach((fields) => delete queryObject[fields]); //removing fields from query object
 
-      return res.status(200).json({
-        success: true,
-        message: "Fetch employees successfully",
-        employees,
-      });
-    } else if (req.query.search) {
-      employees = await employeeModel.findOne({ name: req.query.search });
-      console.log("employeeSearch:", employees);
+  console.log("queryObject:", queryObject); // now in the url if any query comes with sort,page, limit,fields label are will be removed in this query object.
 
-      return res.status(200).json({
-        success: true,
-        message: "Fetch employees successfully",
-        employees,
-      });
-    } else {
-      return res.status(404).json({
-        success: false,
-        message: "Fetch employees failed",
-        employees,
-      });
-    }
-  } else {
-    employees = await employeeModel.find({});
+  // --------------------------------------------------------
 
-    if (employees.length === 0) {
-      return res.status(200).json({
-        success: false,
-        message: "Employees not found",
-      });
-      // return next(new AppError("No employees found", 400));
-    }
+  //* ADVANCED FILTERING
+  // in this advance filtering we will do this like less than, greater than like that filtering
 
+  // Filtering like this in URL = http://localhost:8000/api/employees?price[gte]=1000 -[gte,gt,lte,lt] ==> express will parse it like this --> { price: { gte: '1000' } }
+
+  // to make the filter work, we need something ==> $ infront of gte. { price: { '$gte': '1000' } }, so for that using regular expression in replace method to fix it.
+
+  let queryStr = JSON.stringify(queryObject);
+  queryStr = JSON.parse(queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (match) => `$${match}`));
+  console.log("queryStr:", queryStr); // {price: { '$gte': '1000' }}
+
+  const query = employeeModel.find(queryObject); //this line will returns a query.
+  // here if we add await, then it will return the document matches that query.
+  // if we do that, then we can't able to do any pagination or sorting operations here right?
+
+  //? EXECUTING THE QUERY
+  const employees = await query;
+
+  if (employees.length === 0) {
     return res.status(200).json({
-      success: true,
-      message: "Fetch employees successfully",
-      employees,
+      success: false,
+      message: "No employees found",
     });
+    // return next(new AppError("No employees found", 400));
   }
+
+  //? SEND RESPONSE
+  return res.status(200).json({
+    success: true,
+    message: "Fetch employees successfully",
+    employees,
+  });
 });
 
 export const addEmployee = async function (req, res, next) {
