@@ -28,12 +28,20 @@ export const fetchEmployees = asyncHandler(async function (req, res, next) {
   // to make the filter work, we need something ==> $ infront of gte. { price: { '$gte': '1000' } }, so for that using regular expression in replace method to fix it.
 
   let queryStr = JSON.stringify(queryObject);
+
   queryStr = JSON.parse(queryStr.replace(/\b(gt|gte|lt|lte)\b/g, (match) => `$${match}`));
   console.log("queryStr:", queryStr); // {price: { '$gte': '1000' }}
 
-  const query = employeeModel.find(queryObject); //this line will returns a query.
+  // --------------------------------------------------------
+
+  let query = employeeModel.find(queryObject); //this line will returns a query.
   // here if we add await, then it will return the document matches that query.
   // if we do that, then we can't able to do any pagination or sorting operations here right?
+
+  //* SORTING BY FIELDS
+  if (req.query.sort) {
+    query = query.sort(req.query.sort);
+  }
 
   //? EXECUTING THE QUERY
   const employees = await query;
