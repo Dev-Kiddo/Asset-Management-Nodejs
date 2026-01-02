@@ -61,6 +61,29 @@ export const fetchEmployees = asyncHandler(async function (req, res, next) {
   }
 
   // --------------------------------------------------------
+
+  //* PAGINATION
+  // To make pagination we need page and limit from URL
+  const page = req.query.page * 1 || 1;
+  const limit = req.query.limit * 1 || 2;
+  const skip = (page - 1) * limit;
+
+  query = query.skip(skip).limit(limit);
+
+  if (req.query.page) {
+    const numOfEmployee = await employeeModel.countDocuments();
+
+    if (skip > numOfEmployee) {
+      return res.status(400).json({
+        success: false,
+        message: "This page does not exist",
+      });
+    }
+  }
+
+  // page=2&limit=1
+
+  // --------------------------------------------------------
   //? EXECUTING THE QUERY
   const employees = await query;
 
