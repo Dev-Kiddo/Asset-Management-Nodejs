@@ -3,21 +3,54 @@ import AppError from "../utils/AppError.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 
 export const fetchEmployees = asyncHandler(async function (req, res, next) {
-  const employees = await employeeModel.find({});
+  let employees;
 
-  if (employees.length === 0) {
-    // return res.status(200).json({
-    //   success: false,
-    //   message: "Employees not found",
-    // });
-    return next(new AppError("Employees not found", 200));
+  console.log(req.query);
+
+  if (Object.keys(req.query).length > 0) {
+    if (req.query.status) {
+      employees = await employeeModel.find({ status: req.query.status });
+
+      console.log("employeeStatus:", employees);
+
+      return res.status(200).json({
+        success: true,
+        message: "Fetch employees successfully",
+        employees,
+      });
+    } else if (req.query.search) {
+      employees = await employeeModel.findOne({ name: req.query.search });
+      console.log("employeeSearch:", employees);
+
+      return res.status(200).json({
+        success: true,
+        message: "Fetch employees successfully",
+        employees,
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "Fetch employees failed",
+        employees,
+      });
+    }
+  } else {
+    employees = await employeeModel.find({});
+
+    if (employees.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "Employees not found",
+      });
+      // return next(new AppError("No employees found", 400));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Fetch employees successfully",
+      employees,
+    });
   }
-
-  return res.status(200).json({
-    success: true,
-    message: "Fetch employees successfully",
-    employees,
-  });
 });
 
 export const addEmployee = async function (req, res, next) {
@@ -39,7 +72,7 @@ export const addEmployee = async function (req, res, next) {
     });
   }
 
-  const newEmployee = new employeeModel({ name, department, gender, active: true });
+  const newEmployee = new employeeModel({ name, department, gender, status: "active" });
 
   // console.log("newEmployee:", newEmployee);
 
