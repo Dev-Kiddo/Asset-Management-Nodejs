@@ -40,7 +40,11 @@ export const fetchEmployees = asyncHandler(async function (req, res, next) {
 
   //* SORTING BY FIELDS
   if (req.query.sort) {
-    query = query.sort(req.query.sort);
+    const sortBy = req.query.sort.split(",").join(" ");
+    console.log(sortBy);
+
+    query = query.sort(sortBy);
+    // sort('price ratingsAverage')
   }
 
   //? EXECUTING THE QUERY
