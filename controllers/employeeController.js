@@ -53,6 +53,14 @@ export const fetchEmployees = asyncHandler(async function (req, res, next) {
 
   // --------------------------------------------------------
 
+  //* FIELDS LIMITING
+
+  if (req.query.fields) {
+    const fields = req.query.fields.split(",").join(" ");
+    query = query.select(fields);
+  }
+
+  // --------------------------------------------------------
   //? EXECUTING THE QUERY
   const employees = await query;
 
