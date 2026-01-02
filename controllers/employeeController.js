@@ -40,12 +40,18 @@ export const fetchEmployees = asyncHandler(async function (req, res, next) {
 
   //* SORTING BY FIELDS
   if (req.query.sort) {
+    console.log("req.query.sort", req.query.sort);
+
     const sortBy = req.query.sort.split(",").join(" ");
     console.log(sortBy);
 
     query = query.sort(sortBy);
     // sort('price ratingsAverage')
+  } else {
+    query = query.sort("-createdAt"); //default sorting by created at field
   }
+
+  // --------------------------------------------------------
 
   //? EXECUTING THE QUERY
   const employees = await query;
