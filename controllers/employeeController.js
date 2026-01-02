@@ -1,13 +1,16 @@
 import { employeeModel } from "../models/employeeModel.js";
+import AppError from "../utils/AppError.js";
+import asyncHandler from "../middlewares/asyncHandler.js";
 
-export const fetchEmployees = async function (req, res, next) {
+export const fetchEmployees = asyncHandler(async function (req, res, next) {
   const employees = await employeeModel.find({});
 
   if (employees.length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Employees not found",
-    });
+    // return res.status(200).json({
+    //   success: false,
+    //   message: "Employees not found",
+    // });
+    return next(new AppError("Employees not found", 200));
   }
 
   return res.status(200).json({
@@ -15,7 +18,7 @@ export const fetchEmployees = async function (req, res, next) {
     message: "Fetch employees successfully",
     employees,
   });
-};
+});
 
 export const addEmployee = async function (req, res, next) {
   const { name, department, gender } = req.body;
